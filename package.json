@@ -5,6 +5,10 @@
   "description": "Easy invoicing system stand-alone desktop version,An electron-vue sqlite3 project",
   "license": "MIT",
   "main": "./dist/electron/main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CaanDoll/easy-invoices.git"
+  },
   "keywords": [
     "electron",
     "electron-vue",
@@ -54,7 +58,14 @@
       "icon": "build/icons/icon.png"
     },
     "win": {
-      "icon": "build/icons/icon.png"
+      "icon": "build/icons/icon.png",
+      "publish": [
+        {
+          "provider": "github",
+          "repo": "CaanDoll/easy-invoices",
+          "owner": "CaanDoll"
+        }
+      ]
     },
     "linux": {
       "icon": "build/icons/icon.png"
