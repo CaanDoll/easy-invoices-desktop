@@ -2,11 +2,17 @@
   "name": "easy-invoices",
   "version": "0.0.1",
   "author": "caandoll <caandoll@aliyun.com>",
-  "description": "An electron-vue project",
+  "description": "Easy invoicing system stand-alone desktop version,An electron-vue sqlite3 project",
   "license": "MIT",
   "main": "./dist/electron/main.js",
+  "keywords": [
+    "electron",
+    "electron-vue",
+    "sqlite3"
+  ],
   "scripts": {
     "build": "node .electron-vue/build.js && electron-builder",
+    "build:ci": "node .electron-vue/build.js && electron-builder --publish onTagOrDraft",
     "build:dir": "node .electron-vue/build.js && electron-builder --dir",
     "build:clean": "cross-env BUILD_TARGET=clean node .electron-vue/build.js",
     "build:web": "cross-env BUILD_TARGET=web node .electron-vue/build.js",
@@ -51,6 +57,10 @@
     },
     "linux": {
       "icon": "build/icons/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
     }
   },
   "gitHooks": {

@@ -1,6 +1,6 @@
 <template>
     <div>
-        <Form :label-width="90" inline>
+        <Form :label-width="90" inline @keydown.native.enter.prevent="getDataList('search')">
             <FormItem label="品名">
                 <Select v-model="search.goods_id" style="width:200px;" placeholder="输入关键字进行快捷选择" clearable
                         filterable>
@@ -24,12 +24,12 @@
               :page-size="searchParams.pageSize" @on-change="getDataList" @on-page-size-change="getDataListOnPageChange"
               :page-size-opts="[10,20,30,40,50]" show-total
               show-sizer show-elevator transfer></Page>
-        <Modal v-model="modalShow" :mask-closable="false" :title="modalTitle" @on-cancel="modalShow = false">
+        <Modal v-model="modalShow" :mask-closable="false" title="创建" @on-cancel="modalShow = false">
             <div>
                 <Form ref="formVali" :model="modalParams" :rules="ruleValidate" label-position="right"
-                      :label-width="120">
+                      :label-width="130" @keydown.native.enter.prevent="enterConfirm">
                     <FormItem label="品名" prop="goods_id">
-                        <Select v-model="modalParams.goods_id" style="width:200px;" placeholder="必选，输入关键字进行快捷选择"
+                        <Select v-model="modalParams.goods_id" style="width:250px;" placeholder="必选，输入关键字进行快捷选择"
                                 filterable @on-change="modalSelectGoods">
                             <Option v-for="(item,index) in goodsList" :value="item.id" :key="index">{{item.name}}
                             </Option>
@@ -53,9 +53,7 @@
                 <Button @click="modalShow = false">
                     取消
                 </Button>
-                <Button type="primary" v-if="!modalParams.id" @click="addConfirm" :loading="btnLoading">确认
-                </Button>
-                <Button type="primary" v-if="modalParams.id" @click="editConfirm" :loading="btnLoading">确认
+                <Button type="primary" @click="addConfirm" :loading="btnLoading">确认
                 </Button>
             </div>
         </Modal>
@@ -201,11 +199,6 @@ export default {
       downloadExcelSQL: '',
     };
   },
-  computed: {
-    modalTitle() {
-      return this.modalParams.id ? '修改' : '创建';
-    },
-  },
   methods: {
     // 初始化物品
     initGoodsDataList() {
@@ -233,18 +226,18 @@ export default {
         this.searchParams.pageIndex = method;
       }
       const searchParams = this.searchParams;
-      let whereSQL = '';
-      searchParams.goods_id ? whereSQL += `goods_id = '${searchParams.goods_id}' ` : null;
-      searchParams.dateRange[ 0 ] ? whereSQL += `AND create_time >= ${new Date(searchParams.dateRange[ 0 ]).getTime()} ` : null;
-      searchParams.dateRange[ 1 ] ? whereSQL += `AND create_time <= ${new Date(searchParams.dateRange[ 1 ] + 24 * 60 * 60 * 1000 - 1).getTime()} ` : null;
+      let whereSQL = 'WHERE ';
+      searchParams.goods_id ? whereSQL += `goods_id = '${searchParams.goods_id}' ` : whereSQL += '1 = 1 ';
+      searchParams.dateRange[ 0 ] ? whereSQL += `AND GOODS_DETAIL_LIST.create_time >= ${new Date(searchParams.dateRange[ 0 ]).getTime()} ` : null;
+      searchParams.dateRange[ 1 ] ? whereSQL += `AND GOODS_DETAIL_LIST.create_time <= ${new Date(searchParams.dateRange[ 1 ]).getTime() + 24 * 60 * 60 * 1000 - 1} ` : null;
       const pageSQL = `LIMIT ${searchParams.pageSize} OFFSET ${(searchParams.pageIndex - 1) * searchParams.pageSize} `;
       const orderSQL = 'ORDER BY GOODS_DETAIL_LIST.id DESC ';
       // 导出sql
       this.downloadExcelSQL = `SELECT
       GOODS_DETAIL_LIST.id,GOODS_DETAIL_LIST.goods_id,GOODS_DETAIL_LIST.type,GOODS_DETAIL_LIST.number,GOODS_DETAIL_LIST.create_time,GOODS_DETAIL_LIST.remark,GOODS.name,GOODS.total
-      from GOODS_DETAIL_LIST LEFT OUTER JOIN GOODS ON GOODS_DETAIL_LIST.goods_id = GOODS.id ` + (whereSQL ? 'WHERE ' + whereSQL : '') + orderSQL;
+      from GOODS_DETAIL_LIST LEFT OUTER JOIN GOODS ON GOODS_DETAIL_LIST.goods_id = GOODS.id ` + whereSQL + orderSQL;
       const rowSQL = this.downloadExcelSQL + pageSQL;
-      const countSQL = 'SELECT COUNT(id) AS totalCount from GOODS_DETAIL_LIST ' + (whereSQL ? 'WHERE ' + whereSQL : '');
+      const countSQL = 'SELECT COUNT(id) AS totalCount from GOODS_DETAIL_LIST ' + whereSQL;
       this.$logger(rowSQL);
       this.$db.all(rowSQL, (err, res) => {
         if (err) {
@@ -288,19 +281,21 @@ export default {
     },
     // 选择物品回调
     modalSelectGoods(val) {
-      const SQL = `SELECT total from GOODS WHERE id = '${val}'`;
-      this.$logger(SQL);
-      this.$db.get(SQL, (err, res) => {
-        if (err) {
-          this.$logger(err);
-          this.$Notice.error({
-            title: '搜索失败',
-            desc: err,
-          });
-        } else {
-          this.modalParams.total = res.total;
-        }
-      });
+      if (val) {
+        const SQL = `SELECT total from GOODS WHERE id = '${val}'`;
+        this.$logger(SQL);
+        this.$db.get(SQL, (err, res) => {
+          if (err) {
+            this.$logger(err);
+            this.$Notice.error({
+              title: '搜索失败',
+              desc: err,
+            });
+          } else {
+            this.modalParams.total = res.total;
+          }
+        });
+      }
     },
     // 新增确认
     addConfirm() {
@@ -339,6 +334,9 @@ export default {
           });
         }
       });
+    },
+    enterConfirm() {
+      this.addConfirm();
     },
     //  删除
     del(row) {
@@ -399,22 +397,23 @@ export default {
               name,
               data,
             },
-          ]).then(() => {
+          ]).then(arg => {
             this.downloadExcelLoading = false;
-            this.$Message.success({
-              content: '导出成功',
-            });
-          }).catch(err => {
-            if (err === 'canceled') {
+            if (arg === 'completed') {
+              this.$Message.success({
+                content: '导出成功',
+              });
+            } else {
               this.$Message.warning({
                 content: '导出取消',
               });
-            } else {
-              this.$Notice.error({
-                title: '导出失败',
-                desc: err,
-              });
             }
+          }).catch(err => {
+            this.downloadExcelLoading = false;
+            this.$Notice.error({
+              title: '导出失败',
+              desc: err,
+            });
           });
         }
       });

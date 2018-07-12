@@ -27,6 +27,16 @@
         }
     }
 
+    .aboutText {
+        p {
+            line-height: 26px;
+        }
+    }
+
+    .psText {
+        margin-top: 20px;
+    }
+
 </style>
 
 <template>
@@ -56,10 +66,19 @@
         <Modal
                 v-model="modalShow"
                 title="关于">
-            <p><strong>easy-invoices</strong>专注于桌面端单机版简易进销存业务，初心是帮助我父母提高工作效率。</p>
-            <p>该软件免费使用，并开源于<a href="javascript:void(0)" @click="openUrl('https://github.com/CaanDoll/easy-invoices')">github</a>，如果你有更好的意见或建议，请联系我。
-            </p>
-            <p>我的邮箱：caandoll@aliyun.com</p>
+            <div class="aboutText">
+                <p><strong>easy-invoices {{version}}</strong></p>
+                <p>专注于桌面端单机版简易进销存业务，初心是帮助我父母提高工作效率。</p>
+                <p>该软件免费使用，并开源于<a href="javascript:void(0)"
+                                  @click="openUrl('https://github.com/CaanDoll/easy-invoices')">github</a>，目前只构建了windows版本。
+                </p>
+                <p>如果您有意见或更好的建议，请联系我。</p>
+                <p>我的邮箱：<strong>caandoll@aliyun.com</strong></p>
+            </div>
+            <div class="psText">
+                <p>PS：数据存放在<a href="javascript:void(0)"
+                              @click="openPath(docDir)">{{dbPath}}</a>。若有重装系统等操作，请记得备份，并在重装后放至相同目录</p>
+            </div>
             <div slot="footer">
                 <Button @click="modalShow = false">
                     关闭
@@ -72,6 +91,8 @@
 
 <script>
 import MENU from '../menu';
+import packageJson from '../../../package.json';
+import { docDir, dbPath } from '../utils/db';
 
 export default {
   data() {
@@ -79,6 +100,9 @@ export default {
       MENU,
       activeMenuName: '',
       modalShow: false,
+      version: packageJson.version,
+      docDir,
+      dbPath,
     };
   },
   methods: {
@@ -99,6 +123,9 @@ export default {
     },
     openUrl(url) {
       this.$electron.shell.openExternal(url);
+    },
+    openPath(path) {
+      this.$electron.shell.openItem(path);
     },
   },
   watch: {

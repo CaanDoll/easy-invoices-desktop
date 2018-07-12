@@ -5,6 +5,7 @@ import path from 'path';
 import os from 'os';
 import day from 'dayjs';
 import { ipcRenderer } from 'electron';
+import logger from './logger';
 
 const tmpPath = path.join(os.tmpdir(), 'easy-invoices');
 fse.ensureDirSync(tmpPath);
@@ -19,11 +20,12 @@ const excel = (filename, excelOption) => {
     const buffer = xlsx.build(excelOption);
     const fileName = `${day().format('YYYY-MM-DD_HH-mm-ss')}_${filename}.xlsx`;
     const filePath = path.join(tmpPath, fileName);
+    logger('tmp:' + filePath);
     fs.writeFileSync(filePath, buffer);
     ipcRenderer.send('download', filePath);
     ipcRenderer.once('downstate', (event, arg) => {
-      if (arg === 'completed') {
-        resolve();
+      if (arg === 'completed' || arg === 'cancelled') {
+        resolve(arg);
       } else {
         reject(arg);
       }

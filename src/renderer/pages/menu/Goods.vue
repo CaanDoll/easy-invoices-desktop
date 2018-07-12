@@ -1,6 +1,6 @@
 <template>
     <div>
-        <Form :label-width="90" inline>
+        <Form :label-width="90" inline @keydown.native.enter.prevent="getDataList('search')">
             <FormItem label="品名">
                 <Input v-model="search.name" style="width: 203px" clearable></Input>
             </FormItem>
@@ -27,7 +27,7 @@
         <Modal v-model="modalShow" :mask-closable="false" :title="modalTitle" @on-cancel="modalShow = false">
             <div>
                 <Form ref="formVali" :model="modalParams" :rules="ruleValidate" label-position="right"
-                      :label-width="130">
+                      :label-width="130" @keydown.native.enter.prevent="enterConfirm(modalParams.id)">
                     <FormItem label="品名" prop="name">
                         <Input v-model="modalParams.name" placeholder="必填，长度 100 以内"
                                style="width: 250px"></Input>
@@ -369,6 +369,7 @@ export default {
                 this.$Message.warning({
                   content: '品名已存在',
                 });
+                this.modalBtnLoading = false;
               } else {
                 const SQL = `INSERT INTO GOODS (name,total,buy_price,sell_price,remark,create_time,update_time)
           VALUES ('${modalParams.name}','${modalParams.total}','${modalParams.buy_price}','${modalParams.sell_price}','${modalParams.remark}','${Date.now()}','')`;
@@ -422,32 +423,58 @@ export default {
         if (valid) {
           this.modalBtnLoading = true;
           const modalParams = this.modalParams;
-          const SQL = `UPDATE GOODS SET
+          // 检测品名是否存在
+          const SQL = `SELECT id from GOODS WHERE name = '${modalParams.name}'`;
+          this.$db.get(SQL, (err, res) => {
+            if (err) {
+              this.$logger(err);
+              this.$Notice.error({
+                title: '搜索失败',
+                desc: err,
+              });
+            } else {
+              if (res && res.id !== modalParams.id) {
+                this.$Message.warning({
+                  content: '品名已存在',
+                });
+                this.modalBtnLoading = false;
+              } else {
+                const SQL = `UPDATE GOODS SET
           name='${modalParams.name}'
           ,buy_price='${modalParams.buy_price}'
           ,sell_price='${modalParams.sell_price}'
           ,remark='${modalParams.remark}'
           ,update_time='${Date.now()}'
           WHERE id = ${modalParams.id}`;
-          this.$logger(SQL);
-          this.$db.run(SQL, err => {
-            if (err) {
-              this.$logger(err);
-              this.$Notice.error({
-                title: '编辑失败',
-                desc: err,
-              });
-            } else {
-              this.modalShow = false;
-              this.$Message.success({
-                content: '编辑成功',
-              });
-              this.getDataList();
+                this.$logger(SQL);
+                this.$db.run(SQL, err => {
+                  if (err) {
+                    this.$logger(err);
+                    this.$Notice.error({
+                      title: '编辑失败',
+                      desc: err,
+                    });
+                  } else {
+                    this.modalShow = false;
+                    this.$Message.success({
+                      content: '编辑成功',
+                    });
+                    this.getDataList();
+                  }
+                  this.modalBtnLoading = false;
+                });
+              }
             }
-            this.modalBtnLoading = false;
           });
         }
       });
+    },
+    enterConfirm(id) {
+      if (id) {
+        this.editConfirm();
+      } else {
+        this.addConfirm();
+      }
     },
     //  删除
     del(row) {
@@ -508,23 +535,23 @@ export default {
               name,
               data,
             },
-          ]).then(() => {
+          ]).then(arg => {
             this.downloadExcelLoading = false;
-            this.$Message.success({
-              content: '导出成功',
-            });
-          }).catch(err => {
-            this.downloadExcelLoading = false;
-            if (err === 'canceled') {
+            if (arg === 'completed') {
+              this.$Message.success({
+                content: '导出成功',
+              });
+            } else {
               this.$Message.warning({
                 content: '导出取消',
               });
-            } else {
-              this.$Notice.error({
-                title: '导出失败',
-                desc: err,
-              });
             }
+          }).catch(err => {
+            this.downloadExcelLoading = false;
+            this.$Notice.error({
+              title: '导出失败',
+              desc: err,
+            });
           });
         }
       });

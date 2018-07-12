@@ -76,7 +76,7 @@ ipcMain.on('download', (event, downloadPath) => {
   mainWindow.webContents.downloadURL(downloadPath);
   mainWindow.webContents.session.once('will-download', (event, item) => {
     item.once('done', (event, state) => {
-      // 成功的话 state为complete
+      // 成功的话 state为completed 取消的话 state为cancelled
       mainWindow.webContents.send('downstate', state);
     });
   });

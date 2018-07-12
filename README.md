@@ -1,25 +1,22 @@
-# my-project
+# easy-invoices
 
-> An electron-vue project
+> An electron-vue sqlite3 project
 
 #### Build Setup
 
 ``` bash
-# install dependencies
+# 安装依赖
 npm install
 
-# serve with hot reload at localhost:9080
+# 本地开发
 npm run dev
 
-# build electron application for production
+# 本地打包（安装程序）
 npm run build
 
-
-# lint all JS/Vue component files in `src/`
-npm run lint
+# 本地打包（直接目录）
+npm run build:dir
 
 ```
 
 ---
-
-This project was generated with [electron-vue](https://github.com/SimulatedGREG/electron-vue)@[4c6ee7b](https://github.com/SimulatedGREG/electron-vue/tree/4c6ee7bf4f9b4aa647a22ec1c1ca29c2e59c3645) using [vue-cli](https://github.com/vuejs/vue-cli). Documentation about the original structure can be found [here](https://simulatedgreg.gitbooks.io/electron-vue/content/index.html).

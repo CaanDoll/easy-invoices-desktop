@@ -5,11 +5,12 @@ import sq3 from 'sqlite3';
 import logger from './logger';
 
 // 将数据存至系统用户目录，防止用户误删程序
-const dbPath = path.join(os.homedir(), 'easy-invoices/data.sqlite3');
+export const docDir = path.join(os.homedir(), 'easy-invoices');
+export const dbPath = path.join(docDir, 'data.sqlite3');
 fse.ensureFileSync(dbPath);
+
 const sqlite3 = sq3.verbose();
 const db = new sqlite3.Database(dbPath);
-
 db.serialize(() => {
   /**
    * 物品表 GOODS

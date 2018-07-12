@@ -24,6 +24,6 @@ install:
   - node --version
 
 build_script:
-  - yarn build
+  - yarn build:ci
 
 test: off
